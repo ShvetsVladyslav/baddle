@@ -1,0 +1,91 @@
+﻿<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BADDLE — 4 года</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="bg-noise" aria-hidden="true"></div>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">B</div>
+      <div class="brand-text">
+        <div class="title">BADDLE</div>
+        <div class="subtitle">4 года</div>
+      </div>
+    </div>
+
+    <div class="mode-tabs" role="tablist" aria-label="Режимы">
+      <button class="tab active" data-mode="classic" role="tab" aria-selected="true">Классика</button>
+      <button class="tab" data-mode="emoji" role="tab" aria-selected="false">Эмодзи</button>
+      <button class="tab" data-mode="profile" role="tab" aria-selected="false">Размытие профиля</button>
+      <button class="tab" data-mode="next" role="tab" aria-selected="false">Что дальше?</button>
+    </div>
+
+      <div class="right-actions">
+    <button id="btnNewGame" class="ghost">🆕 Новая игра</button>
+    <button id="btnRandom" class="ghost">🎲 Случайный</button>
+    <button id="btnReset" class="ghost">↻ Сброс</button>
+  </div>
+</header>
+
+  <main class="wrap">
+    <section class="card">
+      <div class="card-head">
+        <div class="mode-badge" id="modeBadge">Классика</div>
+        <div class="meta">
+          <div id="qCounter" class="q-counter">Вопрос 1 / 1</div>
+          <div class="tiny" id="attemptInfo">Попытки: 0</div>
+        </div>
+      </div>
+
+      <div id="content" class="content"></div>
+
+      <div class="answer-area" id="answerArea">
+        <div class="input-wrap" id="inputWrap">
+  <div class="input-row" id="inputRow">
+    <input id="answerInput" class="input" type="text" placeholder="Введи ответ (ник участника)..." autocomplete="off" />
+    <button id="btnSubmit" class="btn primary">Проверить</button>
+  </div>
+  <div id="suggestions" class="suggestions hidden" role="listbox" aria-label="Подсказки"></div>
+</div>
+<div class="choice-row hidden" id="choiceRow">
+          <div id="choices" class="choices"></div>
+          <button id="btnSubmitChoice" class="btn primary">Ответить</button>
+        </div>
+
+        <div class="controls">
+          <button id="btnHint" class="btn">Подсказка</button>
+          <button id="btnReveal" class="btn danger">Показать ответ</button>
+          <button id="btnNext" class="btn glow">Следующий</button>
+        </div>
+
+        <div id="feedback" class="feedback" aria-live="polite"></div>
+        <div id="history" class="history"></div>
+      </div>
+    </section>
+
+    <section class="card small">
+      <div class="card-head">
+        <div class="mode-badge">Как пользоваться</div>
+      </div>
+      <div class="tiny help">
+        <ol>
+          <li>Открой <b>index.html</b> (или выложи папку на GitHub Pages).</li>
+          <li>Меняй вопросы и паки в <b>app.js</b>.</li>
+          <li>Картинки профилей положи в <b>assets/profiles</b>, клипы — в <b>assets/clips</b>.</li>
+          <li>Имена/алиасы можно добавлять в поле <b>aliases</b>.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="tiny">Сделано специально для участников сервера BADDIE.</div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
