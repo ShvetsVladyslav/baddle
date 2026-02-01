@@ -21,7 +21,7 @@ const ATTRIBUTES = [
   { key: "lolRole",     label: "Роль в LoL",  type: "enum", values: ["Топ","Лес","Мид","АДК","Саппорт","-"] },
   { key: "mainChamp",   label: "Основной чемпион",  type: "exact" },
   { key: "rank",        label: "Ранг",        type: "rank",
-    order: ["Железо","Бронза","Серебро","Золото","Платина","Изумруд","Алмаз","Мастер","Грандмастер","Претендент","-"],
+    order: ["Железо","Бронза","Серебро","Золото","Платина","Изумруд","Алмаз","Мастер","Грандмастер","Челленджер","-"],
     near: 1
   },
   { key: "serverRole",  label: "Роль на сервере", type: "enum",
@@ -30,58 +30,64 @@ const ATTRIBUTES = [
 ];
 
 /**
- * ROSTER (шаблон на много людей)
- * Заполняй своими участниками:
- * - name, aliases, avatar
- * - lolRole, voice, timezone, joined
- * - emojis (до 5) для режима Эмодзи
+ * Данные по умолчанию (используются, если data.json недоступен)
  */
-const ROSTER = [];
-for(let i=1;i<=120;i++){
-  ROSTER.push({
-    id: `u${i}`,
-    name: `User${i}`,
-    aliases: [`user${i}`, `юзер${i}`],
-    avatar: "assets/profiles/placeholder-profile.jpg",
-
-    // classic (значение может быть "-" если нет данных)
-lolRole: "АДК",              // Топ / Лес / Мид / АДК / Саппорт / "-"
-mainChamp: "-",              // например "Jinx" или "-"
-rank: "Золото",              // Железо/Бронза/Серебро/Золото/Платина/Изумруд/Алмаз/Мастер/Грандмастер/Претендент/"-"
-serverRole: "без роли",      // mommy / министр додепа / сучка / сладенькие / полусладенькие / без роли
-
-// emoji (1..5)
-    emojis: ["🎮","🔥","🧃","😈","🏆"]
-  });
-}
-
-/**
- * Вопросы: в classic/emoji/profile достаточно targetId (ссылка на ROSTER)
- * Ты потом заменишь эти шаблоны на реальные.
- */
-const QUESTIONS = {
-  classic: Array.from({length: 200}, (_, i) => ({ id: `c${i+1}`, targetId: `u${(i%120)+1}` })),
-  emoji:   Array.from({length: 200}, (_, i) => ({ id: `e${i+1}`, targetId: `u${(i%120)+1}` })),
-  profile: [
-    { id: "p1", targetId: "u1", image: "assets/profiles/placeholder-profile.jpg" }
-  ],
-  next: [
+const DEFAULT_DATA = {
+  players: [
     {
-      id: "n1",
+      id: "u1",
+      name: "это вино",
+      aliases: ["это вино", "vin0", "vino"],
+      avatar: "assets/profiles/placeholder-profile.jpg",
+      lolRole: "Мид",
+      mainChamp: "Мэл",
+      rank: "Алмаз",
+      serverRole: "mommy",
+      emojis: ["🎮","🔥","🧃"]
+    }
+  ],
+  clips: [
+    {
       prompt: "Что произошло дальше?",
       mediaType: "video", // "video" | "image"
       src: "assets/clips/16-1_RU-549033542_01.webm",
-      cutSeconds: 5,
-      choices: [
-        "Пентакилл и чат взорвался",
-        "Умер за 0.4 секунды и крикнул «ДА КАК?!»",
-        "Украл барона и сделал /ff",
-        "Ничего — вырубили свет"
-      ],
-      correctIndex: 1
+      cutSeconds: 5
     }
   ]
 };
+
+let ROSTER = DEFAULT_DATA.players.slice();
+let CLIPS = DEFAULT_DATA.clips.slice();
+let QUESTIONS = buildQuestions();
+
+function buildQuestions(){
+  const rosterCount = ROSTER.length;
+  const classic = rosterCount
+    ? Array.from({length: 200}, (_, i) => ({
+        id: `c${i + 1}`,
+        targetId: ROSTER[i % rosterCount].id
+      }))
+    : [];
+  const emoji = rosterCount
+    ? Array.from({length: 200}, (_, i) => ({
+        id: `e${i + 1}`,
+        targetId: ROSTER[i % rosterCount].id
+      }))
+    : [];
+  const profile = rosterCount
+    ? [{ id: "p1", targetId: ROSTER[0].id, image: ROSTER[0].avatar }]
+    : [];
+  const next = CLIPS.map((clip, i) => ({ id: `n${i + 1}`, ...clip }));
+  return { classic, emoji, profile, next };
+}
+
+function applyData(data){
+  ROSTER = Array.isArray(data?.players) ? data.players : [];
+  CLIPS = Array.isArray(data?.clips) ? data.clips : [];
+  QUESTIONS = buildQuestions();
+  bag.classic = []; bag.emoji = []; bag.profile = []; bag.next = [];
+  state.index = { classic: 0, emoji: 0, profile: 0, next: 0 };
+}
 
 // ------------------ Utilities ------------------
 
@@ -155,18 +161,10 @@ const state = {
 const els = {
   tabs: Array.from(document.querySelectorAll(".tab")),
   modeBadge: document.getElementById("modeBadge"),
-  qCounter: document.getElementById("qCounter"),
-  attemptInfo: document.getElementById("attemptInfo"),
   content: document.getElementById("content"),
   inputRow: document.getElementById("inputRow"),
-  choiceRow: document.getElementById("choiceRow"),
-  choices: document.getElementById("choices"),
   answerInput: document.getElementById("answerInput"),
   btnSubmit: document.getElementById("btnSubmit"),
-  btnSubmitChoice: document.getElementById("btnSubmitChoice"),
-  btnHint: document.getElementById("btnHint"),
-  btnReveal: document.getElementById("btnReveal"),
-  btnNext: document.getElementById("btnNext"),
   feedback: document.getElementById("feedback"),
   history: document.getElementById("history"),
   btnReset: document.getElementById("btnReset"),
@@ -193,12 +191,8 @@ function currentTargetUser(){
 
 function updateMeta(){
   const len = QUESTIONS[state.mode].length;
-  const i = (state.index[state.mode] ?? 0) + 1;
-  els.modeBadge.textContent = modeLabel(state.mode);
-  els.qCounter.textContent = `Вопрос ${i} / ${len}`;
-  els.attemptInfo.textContent = Number.isFinite(MAX_ATTEMPTS)
-    ? `Попытки: ${state.attempts} / ${MAX_ATTEMPTS}`
-    : `Попытки: ${state.attempts}`;
+  const i = len ? (state.index[state.mode] ?? 0) + 1 : 0;
+  if(els.modeBadge) els.modeBadge.textContent = modeLabel(state.mode);
 }
 
 // ------------------ UI helpers ------------------
@@ -345,10 +339,8 @@ function render(){
 
   if(state.mode === "next"){
     els.inputRow.classList.add("hidden");
-    els.choiceRow.classList.remove("hidden");
   }else{
     els.inputRow.classList.remove("hidden");
-    els.choiceRow.classList.add("hidden");
   }
 
   els.answerInput.value = "";
@@ -358,13 +350,17 @@ function render(){
 
   els.content.innerHTML = "";
 
+  if(!q){
+    els.content.innerHTML = `<div class="note">Нет вопросов для этого режима.</div>`;
+    return;
+  }
+
   if(state.mode === "classic") renderClassic(q);
   if(state.mode === "emoji") renderEmoji(q);
   if(state.mode === "profile") renderProfile(q);
   if(state.mode === "next"){
     renderWhatsNext(q);
     state.selectedChoice = null;
-    renderChoices(q);
   }
 
   if(state.mode !== "next"){
@@ -443,7 +439,9 @@ function renderEmoji(q){
   }
 
   const emojis = Array.isArray(target.emojis) ? target.emojis.slice(0,5) : [];
-  const shown = Math.min(1 + state.attempts, 5, emojis.length || 5);
+  const shown = state.solved
+    ? (emojis.length || 5)
+    : Math.min(1 + state.attempts, 5, emojis.length || 5);
 
   const box = document.createElement("div");
   box.className = "hint";
@@ -474,7 +472,7 @@ function renderProfile(q){
   img.alt = "Профиль (размыт)";
   img.src = q.image || target.avatar || "assets/profiles/placeholder-profile.jpg";
 
-  const blur = Math.max(2, 18 - state.attempts * 3);
+  const blur = state.solved ? 0 : Math.max(2, 18 - state.attempts * 3);
   img.style.filter = `blur(${blur}px) saturate(1.05) contrast(1.05)`;
 
   const right = document.createElement("div");
@@ -550,21 +548,6 @@ function renderWhatsNext(q){
   }
 
   els.content.appendChild(wrap);
-}
-
-function renderChoices(q){
-  els.choices.innerHTML = "";
-  (q.choices || []).forEach((text, idx) => {
-    const c = document.createElement("div");
-    c.className = "choice";
-    c.textContent = text;
-    c.onclick = () => {
-      state.selectedChoice = idx;
-      Array.from(els.choices.querySelectorAll(".choice")).forEach(x => x.classList.remove("active"));
-      c.classList.add("active");
-    };
-    els.choices.appendChild(c);
-  });
 }
 
 // ------------------ Сравнение (зелёный/жёлтый/красный) ------------------
@@ -687,38 +670,6 @@ function submitTextAnswer(){
   }
 }
 
-function submitChoiceAnswer(){
-  if(state.solved) return;
-
-  const q = currentQuestion();
-  if(state.selectedChoice === null || state.selectedChoice === undefined){
-    setFeedback("Выбери вариант ответа 🙂", "warn");
-    return;
-  }
-
-  state.attempts++;
-  updateMeta();
-
-  const good = state.selectedChoice === q.correctIndex;
-
-  const chip = document.createElement("div");
-  chip.className = "chip " + (good ? "good" : "bad");
-  chip.textContent = q.choices[state.selectedChoice];
-  els.history.appendChild(chip);
-
-  if(good){
-    state.solved = true;
-    setFeedback("✔ Верно! Ты угадал, что было дальше.", "ok");
-  }else{
-    if(state.attempts >= MAX_ATTEMPTS){
-      state.solved = true;
-      setFeedback(`✖ Попытки закончились. Правильный ответ: ${q.choices[q.correctIndex]}`, "bad");
-    }else{
-      setFeedback("Неправильно. Ещё попытка!", "bad");
-    }
-  }
-}
-
 function nextQuestion(){
   state.index[state.mode] = nextFromBag(state.mode);
   resetRound();
@@ -734,18 +685,18 @@ function newGame(){
 function revealHint(){
   if(state.solved) return;
 
+  if(state.mode === "next"){
+    setFeedback("В этом режиме подсказок нет — обсуждайте устно 🙂", "warn");
+    return;
+  }
+
   state.attempts++;
   updateMeta();
 
   if(state.attempts >= MAX_ATTEMPTS){
     state.solved = true;
-    if(state.mode === "next"){
-      const q = currentQuestion();
-      setFeedback(`✖ Попытки закончились. Ответ: ${q.choices[q.correctIndex]}`, "bad");
-    }else{
-      const t = currentTargetUser();
-      setFeedback(`✖ Попытки закончились. Ответ: ${t?.name ?? "—"}`, "bad");
-    }
+    const t = currentTargetUser();
+    setFeedback(`✖ Попытки закончились. Ответ: ${t?.name ?? "—"}`, "bad");
   }else{
     setFeedback("Подсказка/инфо раскрыта (минус попытка).", "warn");
     render();
@@ -755,12 +706,11 @@ function revealHint(){
 function revealAnswer(){
   state.solved = true;
   if(state.mode === "next"){
-    const q = currentQuestion();
-    setFeedback(`Ответ: ${q.choices[q.correctIndex]}`, "warn");
-  }else{
-    const t = currentTargetUser();
-    setFeedback(`Ответ: ${t?.name ?? "—"}`, "warn");
+    setFeedback("В этом режиме нет правильного ответа.", "warn");
+    return;
   }
+  const t = currentTargetUser();
+  setFeedback(`Ответ: ${t?.name ?? "—"}`, "warn");
 }
 
 function switchMode(mode){
@@ -847,18 +797,28 @@ els.answerInput.addEventListener("keydown", (e) => {
   }
 });
 
-els.btnSubmitChoice.addEventListener("click", submitChoiceAnswer);
-
-els.btnNext.addEventListener("click", nextQuestion);
-els.btnHint.addEventListener("click", revealHint);
-els.btnReveal.addEventListener("click", revealAnswer);
-
 els.btnReset.addEventListener("click", resetRoundOnly);
 els.btnRandom.addEventListener("click", randomCurrentMode);
 els.btnNewGame.addEventListener("click", newGame);
 
 // ------------------ Boot ------------------
-// По умолчанию — рандомный вопрос без повторов
-state.index[state.mode] = nextFromBag(state.mode);
-render();
+async function loadData(){
+  try{
+    const res = await fetch("data.json", { cache: "no-store" });
+    if(!res.ok) throw new Error(`data.json status ${res.status}`);
+    const data = await res.json();
+    applyData(data);
+  }catch(err){
+    console.warn("data.json не загрузился, использую DEFAULT_DATA", err);
+    applyData(DEFAULT_DATA);
+  }
+}
+
+async function init(){
+  await loadData();
+  state.index[state.mode] = nextFromBag(state.mode);
+  render();
+}
+
+init();
 

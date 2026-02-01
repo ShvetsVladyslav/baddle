@@ -106,7 +106,6 @@ body{
   overflow:hidden;
   width: 800px;
 }
-.card.small{ height: fit-content; display: none;}
 
 .card-head{
   padding: 14px 14px 10px;
@@ -122,7 +121,6 @@ body{
   font-weight:800;
   letter-spacing:.4px;
 }
-.meta{ text-align:right; display: none;}
 .q-counter{ font-weight:800; }
 .tiny{ color: var(--muted); font-size: 12px; line-height: 1.35; }
 .help ol{ margin: 0; padding-left: 18px; }
@@ -204,12 +202,6 @@ video{
   box-shadow: 0 0 0 4px rgba(255,46,77,.10);
 }
 
-.controls{
-  margin-top: 12px;
-  display:none;
-  gap: 10px;
-  flex-wrap:wrap;
-}
 
 .btn{
   border:1px solid rgba(255,255,255,.12);
@@ -262,7 +254,6 @@ video{
 .chip.good{ border-color: rgba(54,255,157,.35); color: var(--ok); background: rgba(54,255,157,.06); }
 .chip.bad{ border-color: rgba(255,74,110,.35); color: var(--bad); background: rgba(255,74,110,.06); }
 
-.choice-row{ margin-top: 10px; display:none; gap: 10px; align-items:flex-start; }
 .hidden{ display:none; }
 .choices{ display:grid; gap:10px; flex:1; }
 .choice{

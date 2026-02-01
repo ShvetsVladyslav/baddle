@@ -1,0 +1,23 @@
+﻿{
+  "players": [
+    {
+      "id": "u1",
+      "name": "это вино",
+      "aliases": ["это вино", "vin0", "vino"],
+      "avatar": "assets/profiles/placeholder-profile.jpg",
+      "lolRole": "Мид",
+      "mainChamp": "Мэл",
+      "rank": "Алмаз",
+      "serverRole": "mommy",
+      "emojis": ["🎮", "🔥", "🧃"]
+    }
+  ],
+  "clips": [
+    {
+      "prompt": "Что произошло дальше?",
+      "mediaType": "video",
+      "src": "assets/clips/16-1_RU-549033542_01.webm",
+      "cutSeconds": 5
+    }
+  ]
+}
